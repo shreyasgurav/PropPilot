@@ -1,0 +1,127 @@
+// BrokerPulse - Prisma schema
+// PostgreSQL via Supabase. Run `npm run db:push` to sync.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Broker {
+  id         String     @id @default(cuid())
+  // Maps to the Supabase Auth user id so we can authorize requests.
+  authUserId String?    @unique
+  email      String     @unique
+  name       String
+  phone      String
+  watiApiKey String?
+  // Secret used to authenticate inbound portal webhooks / parse inbound email
+  // addressed to leads+<webhookToken>@inbound.brokerpulse.app
+  webhookToken String   @unique @default(cuid())
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  properties Property[]
+  leads      Lead[]
+
+  @@index([authUserId])
+}
+
+model Property {
+  id          String   @id @default(cuid())
+  brokerId    String
+  broker      Broker   @relation(fields: [brokerId], references: [id], onDelete: Cascade)
+  title       String
+  location    String
+  price       String
+  bedrooms    Int?
+  description String?
+  // Optional external reference used to match inbound leads to a property.
+  externalRef String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  leads       Lead[]
+
+  @@index([brokerId])
+}
+
+model Lead {
+  id              String        @id @default(cuid())
+  brokerId        String
+  broker          Broker        @relation(fields: [brokerId], references: [id], onDelete: Cascade)
+  propertyId      String?
+  property        Property?     @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  name            String
+  phone           String
+  budget          String?
+  source          LeadSource    @default(MANUAL)
+  status          LeadStatus    @default(NEW)
+  lastContactedAt DateTime?
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  messages        Message[]
+  followUpJobs    FollowUpJob[]
+
+  @@index([brokerId])
+  @@index([brokerId, phone])
+  @@index([brokerId, status])
+}
+
+model Message {
+  id        String           @id @default(cuid())
+  leadId    String
+  lead      Lead             @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  direction MessageDirection
+  content   String
+  sentAt    DateTime         @default(now())
+  status    String?
+
+  @@index([leadId])
+}
+
+model FollowUpJob {
+  id          String         @id @default(cuid())
+  leadId      String
+  lead        Lead           @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  pgBossJobId String?
+  day         Int
+  scheduledAt DateTime
+  sentAt      DateTime?
+  status      FollowUpStatus @default(PENDING)
+
+  @@index([leadId])
+  @@index([status, scheduledAt])
+}
+
+enum LeadSource {
+  NINETYNINEACRES
+  MAGICBRICKS
+  HOUSING
+  MANUAL
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  INTERESTED
+  VISIT_SCHEDULED
+  NEGOTIATING
+  CLOSED
+  LOST
+}
+
+enum MessageDirection {
+  OUTBOUND
+  INBOUND
+}
+
+enum FollowUpStatus {
+  PENDING
+  SENT
+  SKIPPED
+  FAILED
+}

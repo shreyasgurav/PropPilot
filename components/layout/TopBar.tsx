@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -17,15 +17,14 @@ function titleForPath(pathname: string): string {
 }
 
 export function TopBar({ brokerName }: TopBarProps) {
-  const router = useRouter();
   const pathname = usePathname();
   const title = titleForPath(pathname);
 
   async function logout() {
     const supabase = createSupabaseBrowserClient();
     await supabase.auth.signOut();
-    router.push("/login");
-    router.refresh();
+    // Hard redirect so middleware sees the cleared session cookie immediately.
+    window.location.href = "/login";
   }
 
   return (

@@ -18,7 +18,7 @@ export function Sidebar() {
   return (
     <aside className="hidden w-60 shrink-0 flex-col bg-slate-900 text-slate-300 md:flex">
       <div className="px-6 py-5 text-lg font-semibold text-white">
-        Broker<span className="text-emerald-400">Pulse</span>
+        Prop<span className="text-emerald-400">Pilot</span>
       </div>
       <nav className="flex-1 space-y-1 px-3">
         {NAV.map((item) => {

@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  title: "BrokerPulse — Never miss a property lead again",
+  title: "PropPilot — Never miss a property lead again",
   description:
     "WhatsApp lead automation for real estate brokers. Instant first contact, automated follow-ups, and a clean dashboard.",
 };

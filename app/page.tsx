@@ -30,7 +30,7 @@ export default function LandingPage() {
     <div className="flex min-h-screen flex-col bg-white text-slate-900">
       <header className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-5">
         <span className="text-lg font-semibold tracking-tight">
-          Broker<span className="text-emerald-600">Pulse</span>
+          Prop<span className="text-emerald-600">Pilot</span>
         </span>
         <nav className="flex items-center gap-2">
           <Button asChild variant="ghost" size="sm">
@@ -51,7 +51,7 @@ export default function LandingPage() {
             Never miss a property lead again.
           </h1>
           <p className="max-w-2xl text-lg text-slate-600">
-            80% of buyers go with whoever replies first. BrokerPulse answers
+            80% of buyers go with whoever replies first. PropPilot answers
             every lead in under a minute and follows up for you — so you only
             spend time on prospects who are ready to talk.
           </p>
@@ -85,7 +85,7 @@ export default function LandingPage() {
 
       <footer className="border-t border-slate-200">
         <div className="mx-auto w-full max-w-5xl px-6 py-6 text-sm text-slate-500">
-          © {new Date().getFullYear()} BrokerPulse. Built for Mumbai brokers.
+          © {new Date().getFullYear()} PropPilot. Built for Mumbai brokers.
         </div>
       </footer>
     </div>

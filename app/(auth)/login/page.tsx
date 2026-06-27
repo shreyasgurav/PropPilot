@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,6 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 
 function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
 
@@ -36,8 +35,8 @@ function LoginForm() {
         return;
       }
       const redirect = searchParams.get("redirect") ?? "/dashboard";
-      router.push(redirect);
-      router.refresh();
+      // Hard redirect so middleware sees the new session cookie immediately.
+      window.location.href = redirect;
     } catch {
       toast({ variant: "destructive", title: "Something went wrong" });
     } finally {
@@ -49,7 +48,7 @@ function LoginForm() {
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
       <div className="w-full max-w-sm">
         <Link href="/" className="mb-8 block text-center text-lg font-semibold">
-          Broker<span className="text-emerald-600">Pulse</span>
+          Prop<span className="text-emerald-600">Pilot</span>
         </Link>
         <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
           <h1 className="text-xl font-semibold">Welcome back</h1>

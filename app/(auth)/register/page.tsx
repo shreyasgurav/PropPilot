@@ -58,8 +58,8 @@ export default function RegisterPage() {
         router.push("/login");
         return;
       }
-      router.push("/dashboard");
-      router.refresh();
+      // Hard redirect so middleware sees the new session cookie immediately.
+      window.location.href = "/dashboard";
     } catch {
       toast({ variant: "destructive", title: "Something went wrong" });
     } finally {
@@ -71,7 +71,7 @@ export default function RegisterPage() {
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
       <div className="w-full max-w-sm">
         <Link href="/" className="mb-8 block text-center text-lg font-semibold">
-          Broker<span className="text-emerald-600">Pulse</span>
+          Prop<span className="text-emerald-600">Pilot</span>
         </Link>
         <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
           <h1 className="text-xl font-semibold">Create your account</h1>

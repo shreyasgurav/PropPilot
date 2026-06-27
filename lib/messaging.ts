@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { sendMessage } from "@/lib/wati";
+import { sendWhatsAppMessage } from "@/lib/whatsapp";
 import { brokerReplyNotification, type TemplateContext } from "@/lib/whatsapp-templates";
 import { MessageDirection } from "@prisma/client";
 import type { Broker, Lead, Property } from "@prisma/client";
@@ -21,32 +21,51 @@ export function buildTemplateContext(lead: LeadWithRelations): TemplateContext {
 
 /**
  * Send a WhatsApp message to the prospect and record it on the lead timeline.
- * Records a 'failed' Message row (and returns ok:false) when WATI errors so the
+ * Sends from the broker's own connected WhatsApp number (multi-tenant).
+ * Records a 'failed' Message row (and returns ok:false) when Meta errors so the
  * failure is visible in the UI and can be retried.
  */
 export async function sendToProspect(
   lead: LeadWithRelations,
   content: string,
 ): Promise<{ ok: boolean; error?: string }> {
-  const result = await sendMessage(lead.phone, content);
+  const phoneNumberId = lead.broker.metaPhoneNumberId;
+
+  if (!phoneNumberId) {
+    await prisma.message.create({
+      data: {
+        leadId: lead.id,
+        direction: MessageDirection.OUTBOUND,
+        content,
+        status: "failed",
+      },
+    });
+    return { ok: false, error: "WhatsApp not connected for this broker" };
+  }
+
+  const result = await sendWhatsAppMessage({
+    phoneNumberId,
+    to: lead.phone,
+    message: content,
+  });
 
   await prisma.message.create({
     data: {
       leadId: lead.id,
       direction: MessageDirection.OUTBOUND,
       content,
-      status: result.ok ? "sent" : "failed",
+      status: result.success ? "sent" : "failed",
     },
   });
 
-  if (result.ok) {
+  if (result.success) {
     await prisma.lead.update({
       where: { id: lead.id },
       data: { lastContactedAt: new Date() },
     });
   }
 
-  return { ok: result.ok, error: result.error };
+  return { ok: result.success, error: result.error };
 }
 
 /**
@@ -71,13 +90,20 @@ export async function notifyBrokerOfReply(
   reply: string,
 ): Promise<void> {
   try {
+    const phoneNumberId = lead.broker.metaPhoneNumberId;
+    if (!phoneNumberId) return; // can't notify without a connected number
+
     const message = brokerReplyNotification({
       prospectName: lead.name,
       prospectPhone: lead.phone,
       propertyTitle: lead.property?.title ?? "a property",
       reply,
     });
-    await sendMessage(lead.broker.phone, message);
+    await sendWhatsAppMessage({
+      phoneNumberId,
+      to: lead.broker.phone,
+      message,
+    });
   } catch (err) {
     console.error("notifyBrokerOfReply failed:", err);
   }

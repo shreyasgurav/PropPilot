@@ -32,6 +32,19 @@ export const sendManualMessageSchema = z.object({
   content: z.string().min(1, "Message cannot be empty").max(2000),
 });
 
+export const connectWhatsappSchema = z.object({
+  phoneNumberId: z
+    .string()
+    .min(5, "Phone Number ID is required")
+    .max(64)
+    .regex(/^\d+$/, "Phone Number ID must be numeric"),
+  wabaId: z
+    .string()
+    .min(5, "WhatsApp Business Account ID is required")
+    .max(64)
+    .regex(/^\d+$/, "WABA ID must be numeric"),
+});
+
 export const registerSchema = z.object({
   name: z.string().min(1, "Name is required").max(160),
   email: z.string().email("Enter a valid email"),

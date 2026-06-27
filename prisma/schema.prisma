@@ -18,16 +18,26 @@ model Broker {
   email      String     @unique
   name       String
   phone      String
-  watiApiKey String?
   // Secret used to authenticate inbound portal webhooks / parse inbound email
-  // addressed to leads+<webhookToken>@inbound.brokerpulse.app
+  // addressed to leads+<webhookToken>@inbound.proppilot.app
   webhookToken String   @unique @default(cuid())
+
+  // Meta WhatsApp Business API (Cloud API) connection.
+  // Each broker connects their own WhatsApp number under our shared WABA.
+  metaPhoneNumberId   String?   @unique // Phone Number ID from Meta dashboard
+  metaWabaId          String?   // WhatsApp Business Account ID
+  metaPhoneNumber     String?   // The actual +91XXXXXXXXXX number
+  metaDisplayName     String?   // Business display name on WhatsApp
+  isWhatsappConnected Boolean   @default(false)
+  whatsappConnectedAt DateTime?
+
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
   properties Property[]
   leads      Lead[]
 
   @@index([authUserId])
+  @@index([metaPhoneNumberId])
 }
 
 model Property {

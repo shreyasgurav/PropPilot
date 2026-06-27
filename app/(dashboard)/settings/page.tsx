@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentBroker } from "@/lib/auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CopyField } from "@/components/settings/CopyField";
+import { WhatsAppConnect } from "@/components/settings/WhatsAppConnect";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,7 @@ export default async function SettingsPage() {
   const appUrl =
     process.env.NEXT_PUBLIC_APP_URL ?? "https://your-app.vercel.app";
   const token = broker.webhookToken;
+  const verifyToken = process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN ?? "";
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -38,9 +40,38 @@ export default async function SettingsPage() {
 
       <Card>
         <CardHeader>
+          <CardTitle>WhatsApp Business</CardTitle>
+          <CardDescription>
+            Connect your WhatsApp number so PropPilot can message prospects and
+            receive their replies directly via the Meta Cloud API.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <WhatsAppConnect
+            initial={{
+              isWhatsappConnected: broker.isWhatsappConnected,
+              metaPhoneNumber: broker.metaPhoneNumber,
+              metaDisplayName: broker.metaDisplayName,
+            }}
+          />
+          <div className="space-y-4 border-t border-slate-100 pt-4">
+            <p className="text-sm text-slate-600">
+              Set these in Meta → WhatsApp → Configuration → Webhook:
+            </p>
+            <CopyField
+              label="Callback URL"
+              value={`${appUrl}/api/webhooks/meta`}
+            />
+            <CopyField label="Verify token" value={verifyToken} />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Lead integrations</CardTitle>
           <CardDescription>
-            Point your portals here so leads flow into BrokerPulse automatically.
+            Point your portals here so leads flow into PropPilot automatically.
             Keep these URLs private — anyone with them can create leads on your
             account.
           </CardDescription>
@@ -56,11 +87,7 @@ export default async function SettingsPage() {
           />
           <CopyField
             label="Inbound email (forward portal lead emails here)"
-            value={`leads+${token}@inbound.brokerpulse.app`}
-          />
-          <CopyField
-            label="WATI incoming-message webhook"
-            value={`${appUrl}/api/webhooks/wati?token=${token}`}
+            value={`leads+${token}@inbound.proppilot.app`}
           />
         </CardContent>
       </Card>

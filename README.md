@@ -1,7 +1,7 @@
 # PropPilot
 
 WhatsApp lead automation for real estate brokers. When a lead arrives from
-99acres / MagicBricks / Housing, BrokerPulse instantly sends a personalized
+99acres / MagicBricks / Housing, PropPilot instantly sends a personalized
 WhatsApp message, schedules Day 1 / 3 / 7 follow-ups, and hands the conversation
 back to the broker the moment the prospect replies.
 
@@ -10,7 +10,7 @@ back to the broker the moment the prospect replies.
 - **Next.js 14** (App Router) + **TypeScript** (strict)
 - **PostgreSQL** (Supabase) + **Prisma**
 - **Supabase Auth** (email/password)
-- **WATI** for WhatsApp send/receive
+- **Meta WhatsApp Business API** (Cloud API) for WhatsApp send/receive — we own the infrastructure
 - **Postmark Inbound** for parsing portal lead emails
 - **pg-boss** (Postgres job queue) for scheduled follow-ups, drained by a Vercel Cron
 - **Tailwind CSS** + **shadcn/ui**
@@ -38,8 +38,17 @@ Open http://localhost:3000 and register a broker account.
 
 ## Environment variables
 
-See `.env.example`. You need a Supabase project (Postgres + Auth), a WATI
-account, and a Postmark inbound server. `CRON_SECRET` secures the job endpoint.
+See `.env.example`. You need a Supabase project (Postgres + Auth), a Meta app
+with the WhatsApp product (App ID/Secret + a permanent System User access
+token), and a Postmark inbound server. `CRON_SECRET` secures the job endpoint.
+
+### Connecting a broker's WhatsApp number
+
+We run one verified Meta WhatsApp Business Account; each broker connects their
+own number under it. In **Settings**, the broker pastes their **Phone Number
+ID** and **WhatsApp Business Account ID** (from Meta → WhatsApp → API Setup) and
+clicks Connect. Set the webhook **Callback URL** (`/api/webhooks/meta`) and
+**Verify token** (`WHATSAPP_WEBHOOK_VERIFY_TOKEN`) in the Meta dashboard.
 
 ## How leads flow in
 
@@ -50,8 +59,8 @@ your sources at:
 | --- | --- |
 | 99acres webhook | `POST /api/webhooks/99acres?token=<token>` |
 | MagicBricks webhook | `POST /api/webhooks/magicbricks?token=<token>` |
-| Portal lead emails | forward to `leads+<token>@inbound.brokerpulse.app` (Postmark) |
-| WATI inbound replies | `POST /api/webhooks/wati?token=<token>` |
+| Portal lead emails | forward to `leads+<token>@inbound.proppilot.app` (Postmark) |
+| WhatsApp inbound replies | `GET`/`POST /api/webhooks/meta` (Meta Cloud API; matched by Phone Number ID) |
 
 Webhook JSON bodies are flexible — the parser looks for `name`, `phone`,
 `budget`, `property`, etc. Phone numbers are normalized to `+91XXXXXXXXXX`.
@@ -75,8 +84,8 @@ sends automatically.
 > cadence in `vercel.json` or trigger `/api/jobs/process` from an external
 > scheduler (e.g. cron-job.org) with the bearer secret.
 
-When a prospect replies (WATI inbound), all pending follow-ups are cancelled,
-the lead moves to `INTERESTED`, and the broker is pinged on WhatsApp.
+When a prospect replies (Meta inbound webhook), all pending follow-ups are
+cancelled, the lead moves to `INTERESTED`, and the broker is pinged on WhatsApp.
 
 ## Key design points
 

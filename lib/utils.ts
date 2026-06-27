@@ -34,13 +34,6 @@ export function normalizePhone(input: string | null | undefined): string | null 
   return `+91${digits}`;
 }
 
-/**
- * The phone format WATI expects (no plus sign): 91XXXXXXXXXX.
- */
-export function toWatiPhone(e164: string): string {
-  return e164.replace(/^\+/, "");
-}
-
 export function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }

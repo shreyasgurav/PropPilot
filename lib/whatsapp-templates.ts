@@ -1,5 +1,5 @@
 /**
- * WhatsApp message templates for BrokerPulse.
+ * WhatsApp message templates for PropPilot.
  *
  * Each builder takes a typed context and returns the final message string.
  * Keep these in one place so copy can be tuned without touching business logic.
@@ -61,7 +61,7 @@ export function brokerReplyNotification(args: {
   return (
     `🔔 ${args.prospectName} (${args.prospectPhone}) just replied about ${args.propertyTitle}:\n\n` +
     `"${args.reply}"\n\n` +
-    `Open BrokerPulse to take over the conversation.`
+    `Open PropPilot to take over the conversation.`
   );
 }
 

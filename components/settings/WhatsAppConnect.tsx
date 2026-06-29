@@ -36,6 +36,12 @@ export function WhatsAppConnect({ initial }: { initial: WhatsAppStatus }) {
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [disconnecting, setDisconnecting] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const stateRef = useRef(state);
+
+  // Sync state to ref for intervals
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   // Clean up polling on unmount.
   useEffect(() => {
@@ -63,7 +69,7 @@ export function WhatsAppConnect({ initial }: { initial: WhatsAppStatus }) {
             title: "WhatsApp Connected! 🎉",
             description: `Linked to ${data.pushName ?? data.phone ?? "your phone"}`,
           });
-        } else if (data.status === "qr_ready" && state !== "showing_qr") {
+        } else if (data.status === "qr_ready" && stateRef.current !== "showing_qr") {
           // QR rotated, refetch it.
           fetchQR();
         }
@@ -71,7 +77,7 @@ export function WhatsAppConnect({ initial }: { initial: WhatsAppStatus }) {
         // Silently ignore network errors during polling.
       }
     }, 3000);
-  }, [state, toast]);
+  }, [toast]);
 
   async function fetchQR() {
     setState("loading_qr");

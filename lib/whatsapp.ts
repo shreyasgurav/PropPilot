@@ -72,7 +72,8 @@ const sleep = (ms: number): Promise<void> =>
  * Meta returns a clear error rather than us silently dropping the message.
  */
 export function normalizeIndianPhone(phone: string): string {
-  return normalizePhone(phone) ?? phone.trim();
+  const normalized = normalizePhone(phone) ?? phone.trim();
+  return normalized.startsWith("+") ? normalized.slice(1) : normalized;
 }
 
 /**

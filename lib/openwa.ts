@@ -70,7 +70,7 @@ export async function createSession(name: string): Promise<{
 }> {
   const res = await openwaFetch<OpenWASession>("/sessions", {
     method: "POST",
-    body: JSON.stringify({ name, engine: "baileys" }),
+    body: JSON.stringify({ name }),
   });
   return { ok: res.ok, session: res.ok ? res.data : undefined, error: res.error };
 }

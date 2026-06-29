@@ -29,9 +29,9 @@ export async function sendToProspect(
   lead: LeadWithRelations,
   content: string,
 ): Promise<{ ok: boolean; error?: string }> {
-  const phoneNumberId = lead.broker.metaPhoneNumberId;
+  const sessionId = lead.broker.openwaSessionId;
 
-  if (!phoneNumberId) {
+  if (!sessionId) {
     await prisma.message.create({
       data: {
         leadId: lead.id,
@@ -44,7 +44,7 @@ export async function sendToProspect(
   }
 
   const result = await sendWhatsAppMessage({
-    phoneNumberId,
+    sessionId,
     to: lead.phone,
     message: content,
   });
@@ -90,8 +90,8 @@ export async function notifyBrokerOfReply(
   reply: string,
 ): Promise<void> {
   try {
-    const phoneNumberId = lead.broker.metaPhoneNumberId;
-    if (!phoneNumberId) return; // can't notify without a connected number
+    const sessionId = lead.broker.openwaSessionId;
+    if (!sessionId) return; // can't notify without a connected session
 
     const message = brokerReplyNotification({
       prospectName: lead.name,
@@ -100,7 +100,7 @@ export async function notifyBrokerOfReply(
       reply,
     });
     await sendWhatsAppMessage({
-      phoneNumberId,
+      sessionId,
       to: lead.broker.phone,
       message,
     });

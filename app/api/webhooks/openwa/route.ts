@@ -1,10 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import {
-  markMessageRead,
-  parseWebhookMessage,
-  verifyWebhook,
-} from "@/lib/whatsapp";
+import { parseWebhookMessage } from "@/lib/whatsapp";
 import { normalizePhone } from "@/lib/utils";
 import {
   notifyBrokerOfReply,
@@ -15,56 +11,54 @@ import { cancelFollowUps } from "@/lib/jobs";
 import { LeadStatus } from "@prisma/client";
 
 /**
- * Meta WhatsApp Cloud API webhook.
+ * OpenWA inbound webhook.
  *
- * GET  — subscription verification handshake (Meta calls this once on setup).
- * POST — inbound events: prospect messages + delivery/read status updates.
+ * OpenWA sends POST requests here when a message is received on any
+ * broker's linked WhatsApp session. The payload format is:
+ *
+ * {
+ *   "event": "message.received",
+ *   "sessionId": "sess_...",
+ *   "data": { from, body, type, id, timestamp, fromMe, notifyName }
+ * }
  *
  * On an inbound prospect message we:
- *   1. record the inbound message on the matching lead
- *   2. cancel all pending automated follow-ups (a human takes over)
- *   3. move the lead to INTERESTED
- *   4. notify the broker on their own WhatsApp
- *   5. mark the prospect's message as read
+ *   1. Identify the broker by sessionId
+ *   2. Find the matching lead by phone number
+ *   3. Record the inbound message on the lead timeline
+ *   4. Cancel all pending automated follow-ups (a human takes over)
+ *   5. Move the lead to INTERESTED
+ *   6. Notify the broker on their own WhatsApp
  *
- * We always return 200 quickly — non-200 makes Meta retry and duplicate work.
+ * We always return 200 quickly — non-200 makes OpenWA retry.
  */
-export async function GET(request: NextRequest) {
-  const params = request.nextUrl.searchParams;
-  const challenge = verifyWebhook(
-    params.get("hub.mode"),
-    params.get("hub.verify_token"),
-    params.get("hub.challenge"),
-  );
-
-  if (challenge === null) {
-    return new NextResponse("Forbidden", { status: 403 });
-  }
-  return new NextResponse(challenge, {
-    status: 200,
-    headers: { "Content-Type": "text/plain" },
-  });
-}
-
 export async function POST(request: NextRequest) {
   try {
+    // Optional: verify HMAC signature from OpenWA.
+    // For now we trust the request since the URL contains a secret token.
+    const token = request.nextUrl.searchParams.get("token");
+    const expected = process.env.OPENWA_WEBHOOK_SECRET;
+    if (expected && token !== expected) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json().catch(() => null);
     const inbound = parseWebhookMessage(body);
 
-    // Status update (delivered/read) or unparseable — ack and move on.
+    // Status update or unparseable — ack and move on.
     if (!inbound) {
       return NextResponse.json({ ignored: true }, { status: 200 });
     }
 
-    // Identify the broker by which business number received the message.
+    // Identify the broker by which OpenWA session received the message.
     const broker = await prisma.broker.findFirst({
-      where: { metaPhoneNumberId: inbound.phoneNumberId },
+      where: { openwaSessionId: inbound.sessionId },
       select: { id: true },
     });
     if (!broker) {
       console.warn(
-        "Inbound WhatsApp for unknown phoneNumberId:",
-        inbound.phoneNumberId,
+        "Inbound WhatsApp for unknown sessionId:",
+        inbound.sessionId,
       );
       return NextResponse.json({ matched: false }, { status: 200 });
     }
@@ -104,16 +98,13 @@ export async function POST(request: NextRequest) {
 
     await notifyBrokerOfReply(lead as LeadWithRelations, text);
 
-    // Best-effort read receipt.
-    await markMessageRead(inbound.phoneNumberId, inbound.messageId);
-
     return NextResponse.json(
       { matched: true, leadId: lead.id },
       { status: 200 },
     );
   } catch (err) {
-    console.error("meta webhook error:", err);
-    // Still 200 so Meta does not retry and duplicate-process.
+    console.error("openwa webhook error:", err);
+    // Still 200 so OpenWA does not retry and duplicate-process.
     return NextResponse.json({ error: "handled" }, { status: 200 });
   }
 }

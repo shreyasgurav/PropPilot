@@ -22,12 +22,12 @@ model Broker {
   // addressed to leads+<webhookToken>@inbound.proppilot.app
   webhookToken String   @unique @default(cuid())
 
-  // Meta WhatsApp Business API (Cloud API) connection.
-  // Each broker connects their own WhatsApp number under our shared WABA.
-  metaPhoneNumberId   String?   @unique // Phone Number ID from Meta dashboard
-  metaWabaId          String?   // WhatsApp Business Account ID
-  metaPhoneNumber     String?   // The actual +91XXXXXXXXXX number
-  metaDisplayName     String?   // Business display name on WhatsApp
+  // OpenWA (self-hosted WhatsApp Web gateway) connection.
+  // Each broker links their phone by scanning a QR code.
+  openwaSessionId     String?   @unique  // OpenWA session UUID (sess_...)
+  openwaSessionName   String?   @unique  // Human-readable session name
+  waPhoneNumber       String?            // The broker's actual phone number (detected after linking)
+  waPushName          String?            // WhatsApp display name
   isWhatsappConnected Boolean   @default(false)
   whatsappConnectedAt DateTime?
 
@@ -37,7 +37,7 @@ model Broker {
   leads      Lead[]
 
   @@index([authUserId])
-  @@index([metaPhoneNumberId])
+  @@index([openwaSessionId])
 }
 
 model Property {

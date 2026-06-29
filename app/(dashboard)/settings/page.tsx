@@ -43,27 +43,17 @@ export default async function SettingsPage() {
           <CardTitle>WhatsApp Business</CardTitle>
           <CardDescription>
             Connect your WhatsApp number so PropPilot can message prospects and
-            receive their replies directly via the Meta Cloud API.
+            receive their replies directly.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
           <WhatsAppConnect
             initial={{
               isWhatsappConnected: broker.isWhatsappConnected,
-              metaPhoneNumber: broker.metaPhoneNumber,
-              metaDisplayName: broker.metaDisplayName,
+              waPhoneNumber: broker.waPhoneNumber,
+              waPushName: broker.waPushName,
             }}
           />
-          <div className="space-y-4 border-t border-slate-100 pt-4">
-            <p className="text-sm text-slate-600">
-              Set these in Meta → WhatsApp → Configuration → Webhook:
-            </p>
-            <CopyField
-              label="Callback URL"
-              value={`${appUrl}/api/webhooks/meta`}
-            />
-            <CopyField label="Verify token" value={verifyToken} />
-          </div>
         </CardContent>
       </Card>
 

@@ -64,6 +64,10 @@ export async function POST(request: NextRequest) {
     });
 
     if (!parsed) {
+      // If it's a Gmail forwarding confirmation, return the email body in the error so the user can see the link in the Cloudmailin dashboard!
+      if (body.headers?.subject?.includes("Forwarding Confirmation") || body.envelope?.from?.includes("forwarding-noreply")) {
+        return jsonError(`GMAIL CONFIRMATION: ${body.plain?.substring(0, 500)}`, 422);
+      }
       return jsonError("Could not extract a valid lead from email", 422);
     }
 

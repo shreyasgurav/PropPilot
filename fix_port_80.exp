@@ -1,0 +1,14 @@
+#!/usr/bin/expect -f
+set timeout -1
+spawn ssh -o StrictHostKeyChecking=no root@37.187.139.100 -p 20068
+expect "assword:"
+send "EVVjrRdAbbCyuyXE\r"
+expect "#"
+send "cd ~/openwa\r"
+expect "#"
+send "sed -i 's/- 2785:2785/- 80:2785/g' docker-compose.yml\r"
+expect "#"
+send "docker compose down && docker compose up -d\r"
+expect "#"
+send "exit\r"
+expect eof

@@ -1,0 +1,6 @@
+#!/usr/bin/expect -f
+set timeout -1
+spawn ssh -o StrictHostKeyChecking=no root@37.187.139.100 -p 20068 "cat /etc/caddy/Caddyfile"
+expect "assword:"
+send "EVVjrRdAbbCyuyXE\r"
+expect eof

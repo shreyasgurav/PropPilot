@@ -1,0 +1,22 @@
+#!/usr/bin/expect -f
+set timeout -1
+spawn ssh -o StrictHostKeyChecking=no root@37.187.139.100 -p 20068
+expect "assword:"
+send "EVVjrRdAbbCyuyXE\r"
+expect "#"
+send "apt-get install -y autossh\r"
+expect "#"
+send "yes | ssh-keygen -t rsa -N '' -f ~/.ssh/id_rsa || true\r"
+expect "#"
+send "ssh -o StrictHostKeyChecking=accept-new -R 80:localhost:2785 nokey@localhost.run -- --url-only > /root/lhr.txt &\r"
+expect "#"
+send "sleep 5\r"
+expect "#"
+send "cat /root/lhr.txt\r"
+expect "#"
+send "cat << 'SYSTEMD' > /etc/systemd/system/lhr.service\n\[Unit]\nDescription=Localhost.run Tunnel\nAfter=network-online.target\n\n\[Service]\nUser=root\nExecStart=/usr/bin/autossh -M 0 -o \"ServerAliveInterval 30\" -o \"ServerAliveCountMax 3\" -o \"StrictHostKeyChecking accept-new\" -R 80:localhost:2785 nokey@localhost.run\nRestart=always\nRestartSec=5\n\n\[Install]\nWantedBy=multi-user.target\nSYSTEMD\r"
+expect "#"
+send "systemctl daemon-reload && systemctl enable --now lhr\r"
+expect "#"
+send "exit\r"
+expect eof

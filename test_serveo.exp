@@ -1,0 +1,8 @@
+#!/usr/bin/expect -f
+set timeout -1
+spawn ssh -o StrictHostKeyChecking=no root@37.187.139.100 -p 20068 "ssh -o StrictHostKeyChecking=no -R proppilot-openwa-77:80:localhost:2785 serveo.net"
+expect "assword:"
+send "EVVjrRdAbbCyuyXE\r"
+expect "Forwarding HTTP traffic from"
+send "\x03"
+expect eof

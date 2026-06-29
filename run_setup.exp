@@ -1,0 +1,12 @@
+#!/usr/bin/expect -f
+set timeout -1
+spawn ssh -o StrictHostKeyChecking=no root@37.187.139.100 -p 20068 "bash -s"
+expect "assword:"
+send "EVVjrRdAbbCyuyXE\r"
+# Read the setup script from file and send it
+set fp [open "deploy/setup-openwa.sh" r]
+set script_content [read $fp]
+close $fp
+expect "# "
+send "$script_content\r"
+expect eof

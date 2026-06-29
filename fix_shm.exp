@@ -1,0 +1,14 @@
+#!/usr/bin/expect -f
+set timeout -1
+spawn ssh -o StrictHostKeyChecking=no root@37.187.139.100 -p 20068
+expect "assword:"
+send "EVVjrRdAbbCyuyXE\r"
+expect "#"
+send "cd ~/openwa\r"
+expect "#"
+send "cat << 'EOF' > docker-compose.yml\nversion: \"3.8\"\nservices:\n  openwa:\n    image: ghcr.io/rmyndharis/openwa:latest\n    container_name: openwa\n    restart: always\n    ports:\n      - \"2785:2785\"\n    volumes:\n      - openwa_data:/app/data\n    environment:\n      - NODE_ENV=production\n      - PORT=2785\n    shm_size: \"1gb\"\nvolumes:\n  openwa_data:\n    driver: local\nEOF\r"
+expect "#"
+send "docker compose down && docker compose up -d\r"
+expect "#"
+send "exit\r"
+expect eof

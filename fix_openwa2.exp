@@ -1,0 +1,12 @@
+#!/usr/bin/expect -f
+set timeout -1
+spawn ssh -o StrictHostKeyChecking=no root@37.187.139.100 -p 20068
+expect "assword:"
+send "EVVjrRdAbbCyuyXE\r"
+expect "#"
+send "cat << 'SCRIPT' > /root/start_tunnel.sh\n#!/bin/bash\nkillall cloudflared 2>/dev/null\ncloudflared tunnel --url http://localhost:2785 2>&1 | tee /root/cf.log &\nwhile ! grep -q \"trycloudflare.com\" /root/cf.log; do sleep 1; done\nURL=\$(grep -o 'https://[a-zA-Z0-9-]*\\.trycloudflare\\.com' /root/cf.log | head -1)\necho \"Found URL: \$URL\"\ncurl -X POST https://proppilot-psi.vercel.app/api/webhooks/tunnel -H \"Content-Type: application/json\" -d \"{\\\"url\\\":\\\"\$URL\\\",\\\"secret\\\":\\\"proppilot_cron_secret_x9k2m7p4q8w3n6j5\\\"}\"\nwait\nSCRIPT\r"
+expect "#"
+send "systemctl restart cftunnel\r"
+expect "#"
+send "exit\r"
+expect eof

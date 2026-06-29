@@ -1,0 +1,16 @@
+#!/usr/bin/expect -f
+set timeout -1
+spawn ssh -o StrictHostKeyChecking=no root@37.187.139.100 -p 20068
+expect "assword:"
+send "EVVjrRdAbbCyuyXE\r"
+expect "#"
+send "yes | ssh-keygen -t rsa -N '' -f ~/.ssh/id_rsa\r"
+expect "#"
+send "ssh -o StrictHostKeyChecking=accept-new -R 80:localhost:2785 nokey@localhost.run 2>&1 | grep -o 'https://[^ ]*' | head -n 1 > /root/lhr.txt &\r"
+expect "#"
+send "sleep 5\r"
+expect "#"
+send "cat /root/lhr.txt\r"
+expect "#"
+send "exit\r"
+expect eof

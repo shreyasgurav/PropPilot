@@ -1,0 +1,14 @@
+#!/usr/bin/expect -f
+set timeout -1
+spawn ssh -o StrictHostKeyChecking=no root@37.187.139.100 -p 20068
+expect "assword:"
+send "EVVjrRdAbbCyuyXE\r"
+expect "#"
+send "tmux kill-session -t cf\r"
+expect "#"
+send "tmux new-session -d -s cf 'cloudflared tunnel --url http://127.0.0.1:3000 2>&1 | tee /root/cf2.log'\r"
+expect "#"
+send "sleep 10 && grep trycloudflare /root/cf2.log\r"
+expect "#"
+send "exit\r"
+expect eof

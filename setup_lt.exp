@@ -1,0 +1,20 @@
+#!/usr/bin/expect -f
+set timeout -1
+spawn ssh -o StrictHostKeyChecking=no root@37.187.139.100 -p 20068
+expect "assword:"
+send "EVVjrRdAbbCyuyXE\r"
+expect "#"
+send "apt update && apt install -y nodejs npm\r"
+expect "#"
+send "npm install -g localtunnel pm2\r"
+expect "#"
+send "pm2 delete localtunnel || true\r"
+expect "#"
+send "pm2 start lt --name localtunnel -- --port 2785 --subdomain proppilot-openwa-77\r"
+expect "#"
+send "pm2 save\r"
+expect "#"
+send "pm2 startup\r"
+expect "#"
+send "exit\r"
+expect eof

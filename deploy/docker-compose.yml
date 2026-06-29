@@ -1,0 +1,23 @@
+version: "3.8"
+
+services:
+  openwa:
+    image: openwa/openwa:latest
+    container_name: openwa
+    restart: always
+    ports:
+      - "2785:3000"
+    volumes:
+      - openwa_data:/app/data
+    environment:
+      - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  openwa_data:
+    driver: local

@@ -1,0 +1,16 @@
+#!/usr/bin/expect -f
+set timeout -1
+spawn ssh -o StrictHostKeyChecking=no root@37.187.139.100 -p 20068
+expect "assword:"
+send "EVVjrRdAbbCyuyXE\r"
+expect "#"
+send "cat << 'SCRIPT' > /root/start_tunnel.sh\n#!/bin/bash\nkillall cloudflared 2>/dev/null\ncloudflared tunnel --url http://localhost:2785 2>&1 | tee /root/cf.log &\nwhile ! grep -q \"trycloudflare.com\" /root/cf.log; do sleep 1; done\nURL=\$(grep -o 'https://.*\\.trycloudflare\\.com' /root/cf.log | head -1)\necho \"Found URL: \$URL\"\ncurl -X POST https://proppilot-psi.vercel.app/api/webhooks/tunnel -H \"Content-Type: application/json\" -d \"{\\\"url\\\":\\\"\$URL\\\",\\\"secret\\\":\\\"proppilot_cron_secret_x9k2m7p4q8w3n6j5\\\"}\"\nwait\nSCRIPT\r"
+expect "#"
+send "chmod +x /root/start_tunnel.sh\r"
+expect "#"
+send "cat << 'SYSTEMD' > /etc/systemd/system/cftunnel.service\n\[Unit]\nDescription=Cloudflare Tunnel Updater\nAfter=network-online.target\n\n\[Service]\nUser=root\nExecStart=/root/start_tunnel.sh\nRestart=always\nRestartSec=10\n\n\[Install]\nWantedBy=multi-user.target\nSYSTEMD\r"
+expect "#"
+send "systemctl daemon-reload && systemctl stop lhr && systemctl disable lhr && systemctl enable --now cftunnel\r"
+expect "#"
+send "exit\r"
+expect eof

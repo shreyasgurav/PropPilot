@@ -1,0 +1,14 @@
+#!/usr/bin/expect -f
+set timeout -1
+
+# Upload the setup script
+spawn scp -o StrictHostKeyChecking=no -P 20068 deploy/setup-openwa.sh root@37.187.139.100:/root/setup-openwa.sh
+expect "assword:"
+send "EVVjrRdAbbCyuyXE\r"
+expect eof
+
+# Run the setup script
+spawn ssh -o StrictHostKeyChecking=no root@37.187.139.100 -p 20068 "bash /root/setup-openwa.sh"
+expect "assword:"
+send "EVVjrRdAbbCyuyXE\r"
+expect eof

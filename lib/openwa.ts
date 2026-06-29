@@ -1,3 +1,4 @@
+import { prisma } from "@/lib/prisma";
 /**
  * OpenWA REST API Client.
  *
@@ -10,7 +11,17 @@
  *   OPENWA_API_KEY   — the admin key from OpenWA's data/.api-key
  */
 
-function baseUrl(): string {
+async function baseUrl(): Promise<string> {
+  try {
+    // Attempt to fetch dynamically synced URL from DB
+    const rows = await prisma.$queryRaw<{value: string}[]>`SELECT value FROM _config WHERE key = 'OPENWA_URL'`;
+    if (rows.length > 0 && rows[0].value) {
+      return rows[0].value.replace(/\/+$/, "");
+    }
+  } catch (err) {
+    // Ignore error if table doesn't exist yet
+  }
+  
   const url = process.env.OPENWA_BASE_URL;
   if (!url) throw new Error("OPENWA_BASE_URL must be set");
   return url.replace(/\/+$/, ""); // strip trailing slashes
@@ -26,10 +37,12 @@ async function openwaFetch<T = unknown>(
   path: string,
   options: RequestInit = {},
 ): Promise<{ ok: boolean; status: number; data: T; error?: string }> {
-  const url = `${baseUrl()}/api${path}`;
+  const base = await baseUrl();
+  const url = `${base}/api${path}`;
   const headers: Record<string, string> = {
     "X-API-Key": apiKey(),
     "Content-Type": "application/json",
+    "Bypass-Tunnel-Reminder": "true",
     ...((options.headers as Record<string, string>) ?? {}),
   };
 

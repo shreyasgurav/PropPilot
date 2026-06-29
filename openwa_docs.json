@@ -1,0 +1,4 @@
+spawn ssh -o StrictHostKeyChecking=no root@37.187.139.100 -p 20068 curl -s http://localhost:2785/api/docs-json
+(root@37.187.139.100) Password: 
+Read from remote host 37.187.139.100: Connection reset by peer
+client_loop: send disconnect: Broken pipe

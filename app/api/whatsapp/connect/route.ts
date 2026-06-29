@@ -27,8 +27,8 @@ export async function POST() {
       return jsonOk({ sessionId: broker.openwaSessionId, existing: true });
     }
 
-    // Create a unique session name from the broker's cuid.
-    const sessionName = `broker-${broker.id.slice(-8)}`;
+    // Create a unique session name from the broker's cuid + timestamp.
+    const sessionName = `broker-${broker.id.slice(-8)}-${Date.now()}`;
 
     const created = await createSession(sessionName);
     if (!created.ok || !created.session) {

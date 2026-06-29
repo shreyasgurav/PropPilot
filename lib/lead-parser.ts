@@ -41,8 +41,9 @@ export function detectSource(email: RawEmail): LeadSource {
  */
 function extractField(text: string, labels: string[]): string | null {
   for (const label of labels) {
+    // Anchor to start of line so "Name" doesn't accidentally match inside "Property Name"
     const re = new RegExp(
-      `${label}\\s*[:\\-]\\s*(.+?)(?:\\r?\\n|$)`,
+      `(?:^|\\n)[ \\t]*${label}[ \\t]*[:\\-][ \\t]*(.+?)(?:\\r?\\n|$)`,
       "i",
     );
     const match = text.match(re);
@@ -89,7 +90,7 @@ export function parseLeadEmail(email: RawEmail): ParsedLead | null {
   if (!phone) return null;
 
   const name =
-    extractField(body, ["Name", "Customer Name", "Lead Name", "Buyer Name"]) ??
+    extractField(body, ["Buyer Name", "Customer Name", "Lead Name", "Name"]) ??
     "Prospect";
 
   const budget = extractField(body, ["Budget", "Price Range", "Budget Range"]);

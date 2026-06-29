@@ -70,11 +70,8 @@ export async function POST(request: NextRequest) {
         body.envelope?.from?.includes("forwarding-noreply@google.com");
 
       if (isGmailConfirmation && body.plain) {
-        // Find the confirmation code (usually an 8 or 9 digit number)
-        const codeMatch = body.plain.match(/Confirmation code:\s*(\d+)/i);
-        const code = codeMatch ? codeMatch[1] : "Could not find code";
-        
-        return jsonError(`GMAIL CONFIRMATION CODE: ${code}`, 422);
+        // Return the whole email text so the user can read the confirmation code
+        return jsonError(`GMAIL EMAIL BODY: ${body.plain}`, 422);
       }
 
       return jsonError("Could not extract a valid lead from email", 422);

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { ArrowLeft, Send, Ban, Phone } from "lucide-react";
+import { ArrowLeft, Send, Ban, Phone, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -112,6 +112,21 @@ export function LeadDetailView({ leadId }: { leadId: string }) {
     }
   }
 
+  async function deleteLead() {
+    if (!confirm("Are you sure you want to delete this lead?")) return;
+    const res = await fetch(`/api/leads/${leadId}`, {
+      method: "DELETE",
+    });
+    if (res.ok) {
+      toast({ title: "Lead deleted" });
+      router.push("/leads");
+      router.refresh();
+    } else {
+      const json = await res.json();
+      toast({ variant: "destructive", title: "Failed to delete lead", description: json.error });
+    }
+  }
+
   if (loading) {
     return <p className="text-sm text-slate-400">Loading lead…</p>;
   }
@@ -140,11 +155,16 @@ export function LeadDetailView({ leadId }: { leadId: string }) {
             <ArrowLeft className="h-4 w-4" /> Back
           </Link>
         </Button>
-        <a href={`tel:${lead.phone}`}>
-          <Button variant="outline" size="sm">
-            <Phone className="h-4 w-4" /> Call {lead.phone}
+        <div className="flex gap-2">
+          <Button variant="destructive" size="sm" onClick={deleteLead}>
+            <Trash2 className="h-4 w-4" /> Delete
           </Button>
-        </a>
+          <a href={`tel:${lead.phone}`}>
+            <Button variant="outline" size="sm">
+              <Phone className="h-4 w-4" /> Call {lead.phone}
+            </Button>
+          </a>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">

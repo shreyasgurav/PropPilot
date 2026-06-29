@@ -77,3 +77,19 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
     return handleApiError(err);
   }
 }
+
+export async function DELETE(_request: NextRequest, { params }: RouteContext) {
+  try {
+    const broker = await requireBroker();
+    const existing = await prisma.lead.findFirst({
+      where: { id: params.id, brokerId: broker.id },
+      select: { id: true },
+    });
+    if (!existing) return jsonError("Lead not found", 404);
+
+    await prisma.lead.delete({ where: { id: params.id } });
+    return jsonOk({ deleted: true });
+  } catch (err) {
+    return handleApiError(err);
+  }
+}

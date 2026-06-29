@@ -68,16 +68,8 @@ export default async function SettingsPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <CopyField
-            label="99acres webhook URL"
-            value={`${appUrl}/api/webhooks/99acres?token=${token}`}
-          />
-          <CopyField
-            label="MagicBricks webhook URL"
-            value={`${appUrl}/api/webhooks/magicbricks?token=${token}`}
-          />
-          <CopyField
             label="Inbound email (forward portal lead emails here)"
-            value={`leads+${token}@inbound.proppilot.app`}
+            value={`a0bfccf66edceffa79e4+${token}@cloudmailin.net`}
           />
         </CardContent>
       </Card>

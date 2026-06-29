@@ -177,6 +177,16 @@ export function PropertiesView() {
                     {p._count.leads} {p._count.leads === 1 ? "lead" : "leads"}
                   </span>
                 </div>
+                {p.externalRef && (
+                  <div className="mt-2">
+                    <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
+                      Portal ID: {p.externalRef}
+                    </span>
+                  </div>
+                )}
+                {!p.externalRef && (
+                  <p className="mt-2 text-xs text-amber-500">⚠ No portal ID — add one for exact matching</p>
+                )}
               </CardContent>
             </Card>
           ))}
@@ -235,13 +245,18 @@ export function PropertiesView() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="p-ref">Portal ref (optional)</Label>
+                <Label htmlFor="p-ref">
+                  Portal Listing ID <span className="text-slate-400 font-normal">(optional but recommended)</span>
+                </Label>
                 <Input
                   id="p-ref"
-                  placeholder="99acres listing ID"
+                  placeholder="e.g. 96123456 from 99acres URL"
                   value={form.externalRef}
                   onChange={(e) => setForm({ ...form, externalRef: e.target.value })}
                 />
+                <p className="text-xs text-slate-400">
+                  Copy the Property/Listing ID from your 99acres or MagicBricks listing. This ensures leads are matched to the correct property even when you have multiple similar ones.
+                </p>
               </div>
             </div>
             <div className="space-y-2">

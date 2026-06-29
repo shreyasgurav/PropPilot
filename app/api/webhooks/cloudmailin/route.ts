@@ -64,10 +64,30 @@ export async function POST(request: NextRequest) {
     });
 
     if (!parsed) {
-      // If it's a Gmail forwarding confirmation, return the email body in the error so the user can see the link in the Cloudmailin dashboard!
-      if (body.headers?.subject?.includes("Forwarding Confirmation") || body.envelope?.from?.includes("forwarding-noreply")) {
-        return jsonError(`GMAIL CONFIRMATION: ${body.plain?.substring(0, 500)}`, 422);
+      // Auto-confirm Gmail forwarding verification emails.
+      // When a broker adds their Cloudmailin address as a Gmail forwarding target,
+      // Gmail sends a confirmation email with a link. We detect it here and
+      // automatically fetch the link so the broker doesn't have to do it manually.
+      const isGmailConfirmation =
+        body.headers?.subject?.includes("Forwarding Confirmation") ||
+        body.envelope?.from?.includes("forwarding-noreply@google.com");
+
+      if (isGmailConfirmation && body.plain) {
+        const urlMatch = body.plain.match(/https:\/\/mail\.google\.com\/mail\/vf-[^\s\n"]+/);
+        if (urlMatch) {
+          const confirmUrl = urlMatch[0].replace(/\s/g, "");
+          console.log("Auto-confirming Gmail forwarding:", confirmUrl);
+          try {
+            await fetch(confirmUrl, { redirect: "follow" });
+            console.log("Gmail forwarding confirmed successfully!");
+            return jsonOk({ message: "Gmail forwarding confirmed automatically" }, 200);
+          } catch (fetchErr) {
+            console.error("Failed to auto-confirm Gmail forwarding:", fetchErr);
+            return jsonError(`Auto-confirm failed. Open this URL manually: ${confirmUrl}`, 422);
+          }
+        }
       }
+
       return jsonError("Could not extract a valid lead from email", 422);
     }
 

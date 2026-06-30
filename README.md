@@ -10,8 +10,8 @@ back to the broker the moment the prospect replies.
 - **Next.js 14** (App Router) + **TypeScript** (strict)
 - **PostgreSQL** (Supabase) + **Prisma**
 - **Supabase Auth** (email/password)
-- **Meta WhatsApp Business API** (Cloud API) for WhatsApp send/receive — we own the infrastructure
-- **Postmark Inbound** for parsing portal lead emails
+- **OpenWA (Baileys Engine)** self-hosted on a VPS for WhatsApp send/receive (acts as WhatsApp Web, no Meta fees)
+- **Cloudmailin** for parsing portal lead inbound emails
 - **pg-boss** (Postgres job queue) for scheduled follow-ups, drained by a Vercel Cron
 - **Tailwind CSS** + **shadcn/ui**
 
@@ -38,53 +38,30 @@ Open http://localhost:3000 and register a broker account.
 
 ## Environment variables
 
-See `.env.example`. You need a Supabase project (Postgres + Auth), a Meta app
-with the WhatsApp product (App ID/Secret + a permanent System User access
-token), and a Postmark inbound server. `CRON_SECRET` secures the job endpoint.
+See `.env.example`. You need a Supabase project (Postgres + Auth), an OpenWA instance (self-hosted via Docker), and a Cloudmailin target. `CRON_SECRET` secures the job endpoint.
 
 ### Connecting a broker's WhatsApp number
 
-We run one verified Meta WhatsApp Business Account; each broker connects their
-own number under it. In **Settings**, the broker pastes their **Phone Number
-ID** and **WhatsApp Business Account ID** (from Meta → WhatsApp → API Setup) and
-clicks Connect. Set the webhook **Callback URL** (`/api/webhooks/meta`) and
-**Verify token** (`WHATSAPP_WEBHOOK_VERIFY_TOKEN`) in the Meta dashboard.
+We use OpenWA with the Baileys engine. In **Settings**, the broker clicks **Connect with QR code** and scans it using their WhatsApp app (Linked Devices). 
+Behind the scenes, PropPilot talks to the OpenWA API to create an isolated session and registers a webhook back to Vercel so we receive inbound replies. We also dynamically sync Cloudflare Tunnel URLs via the `/api/webhooks/tunnel` endpoint to ensure stable connectivity to the self-hosted OpenWA instance.
 
 ## How leads flow in
 
-Each broker gets a private `webhookToken` (see **Settings** in the app). Point
-your sources at:
+Each broker gets a private Cloudmailin email address (see **Settings** in the app). Point your sources at:
 
 | Source | Endpoint |
 | --- | --- |
-| 99acres webhook | `POST /api/webhooks/99acres?token=<token>` |
-| MagicBricks webhook | `POST /api/webhooks/magicbricks?token=<token>` |
-| Portal lead emails | forward to `leads+<token>@inbound.proppilot.app` (Postmark) |
-| WhatsApp inbound replies | `GET`/`POST /api/webhooks/meta` (Meta Cloud API; matched by Phone Number ID) |
+| Portal lead emails | forward to `<your-cloudmailin-address>+<token>@cloudmailin.net` |
+| WhatsApp inbound replies | `POST /api/webhooks/openwa` (Sent automatically by OpenWA) |
 
-Webhook JSON bodies are flexible — the parser looks for `name`, `phone`,
-`budget`, `property`, etc. Phone numbers are normalized to `+91XXXXXXXXXX`.
-
-### Test a lead locally
-
-```bash
-curl -X POST "http://localhost:3000/api/webhooks/99acres?token=YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Rahul","phone":"9812345678","budget":"₹80-90L","property":"2BHK in Powai"}'
-```
+Webhook JSON bodies are flexible — the parser looks for `name`, `phone`, `budget`, `property`, etc. Phone numbers are normalized to `+91XXXXXXXXXX`.
 
 ## Scheduled follow-ups
 
-`scheduleFollowUps()` enqueues Day 1/3/7 jobs in pg-boss. The cron endpoint
-`/api/jobs/process` drains due jobs every minute (configured in `vercel.json`).
-It is protected by `Authorization: Bearer <CRON_SECRET>`, which Vercel Cron
-sends automatically.
+`scheduleFollowUps()` enqueues Day 1/3/7 jobs in pg-boss. The cron endpoint `/api/jobs/process` drains due jobs every minute (configured in `vercel.json`).
+It is protected by `Authorization: Bearer <CRON_SECRET>`, which Vercel Cron sends automatically.
 
-> Vercel Cron at one-minute cadence requires a Pro plan. On Hobby, lower the
-> cadence in `vercel.json` or trigger `/api/jobs/process` from an external
-> scheduler (e.g. cron-job.org) with the bearer secret.
-
-When a prospect replies (Meta inbound webhook), all pending follow-ups are
+When a prospect replies (OpenWA inbound webhook), all pending follow-ups are
 cancelled, the lead moves to `INTERESTED`, and the broker is pinged on WhatsApp.
 
 ## Key design points
@@ -92,9 +69,9 @@ cancelled, the lead moves to `INTERESTED`, and the broker is pinged on WhatsApp.
 - **Multi-tenancy:** every query is scoped by `brokerId` from the Supabase session.
 - **Deduplication:** same phone + property within 24h updates the existing lead.
 - **Rate limiting:** at most one outbound WhatsApp per lead per day.
-- **Failure handling:** failed sends are recorded as `failed` messages and pg-boss retries.
+- **Dynamic Routing:** Vercel automatically updates its OpenWA connection URL via a tunnel sync script running on the VPS.
 
 ## Deploy
 
-App on Vercel, database on Supabase. Set all env vars in Vercel, then deploy.
+App on Vercel, database on Supabase. OpenWA on a cheap VPS ($5/mo).
 `npm run build` runs `prisma generate` automatically.
